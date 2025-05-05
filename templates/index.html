@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JSON Chat Viewer</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .message { margin-bottom: 10px; }
+        .timestamp { color: gray; font-size: 0.9em; }
+        .sender { font-weight: bold; }
+        .download-links { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Upload JSON Chat File</h1>
+    <form method="post" enctype="multipart/form-data">
+        <input type="file" name="json_file" accept=".json" required>
+        <button type="submit">Upload & View</button>
+    </form>
+
+    {% if messages %}
+        <div class="download-links">
+            <h2>Download as:</h2>
+            <a href="{{ url_for('download', filetype='txt') }}">📄 Text File (.txt)</a> |
+            <a href="{{ url_for('download', filetype='csv') }}">📑 CSV File (.csv)</a>
+        </div>
+
+        <h2>Chat Messages</h2>
+        {% for msg in messages %}
+            <div class="message">
+                <div class="timestamp">[{{ msg.timestamp }}]</div>
+                <div class="sender">{{ msg.sender }}:</div>
+                <div class="text">{{ msg.text }}</div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
