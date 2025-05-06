@@ -16,7 +16,7 @@
   </script>
 </head>
 <body>
-
+<center>
 <h2>Upload Skype JSON Chat File</h2>
 {% with messages = get_flashed_messages() %}
   {% if messages %}
@@ -53,6 +53,6 @@
   <a href="{{ url_for('download', filetype='csv') }}">Download CSV</a>
 </p>
 {% endif %}
-
+</center>
 </body>
 </html>
