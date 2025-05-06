@@ -1,15 +1,15 @@
-from flask import Flask, request, render_template, send_file, redirect, url_for
+from flask import Flask, request, render_template, send_file, redirect, url_for, flash
 import os
+import ijson
 import csv
+import uuid
 import traceback
-import ijson  # streaming JSON parser
 
 app = Flask(__name__)
-
-# Configuration
+app.secret_key = 'secret'
 UPLOAD_FOLDER = 'uploads'
 DOWNLOAD_FOLDER = 'downloads'
-app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200 MB max upload
+MAX_FILE_SIZE_MB = 100
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
@@ -22,25 +22,30 @@ def index():
     chat_messages = []
 
     if request.method == 'POST':
-        try:
-            file = request.files['json_file']
-            if file and file.filename.endswith('.json'):
-                path = os.path.join(UPLOAD_FOLDER, file.filename)
-                file.save(path)
+        file = request.files['json_file']
+        if file and file.filename.endswith('.json'):
+            file_size = len(file.read()) / (1024 * 1024)
+            file.seek(0)
 
-                with open(path, 'rb') as f:  # use binary mode for ijson
-                    for conv in ijson.items(f, 'conversations.item'):
-                        for msg in conv.get("messages", []):
-                            chat_messages.append({
-                                "timestamp": msg.get("timestamp", ""),
-                                "sender": msg.get("from", "Unknown"),
-                                "text": msg.get("text", "")
-                            })
+            if file_size > MAX_FILE_SIZE_MB:
+                flash(f"File too large! Max {MAX_FILE_SIZE_MB}MB allowed.")
+                return redirect(url_for('index'))
 
-        except Exception as e:
-            print("❌ Error while processing the uploaded file:")
-            print(traceback.format_exc())
-            return f"<h2>Error processing file:</h2><pre>{e}</pre>", 500
+            path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4()}_{file.filename}")
+            file.save(path)
+
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    parser = ijson.items(f, 'item')
+                    for msg in parser:
+                        chat_messages.append({
+                            "timestamp": msg.get("timestamp", ""),
+                            "sender": msg.get("sender", "Unknown"),
+                            "text": msg.get("message", "")
+                        })
+            except Exception as e:
+                flash(f"Error parsing JSON: {str(e)}")
+                return redirect(url_for('index'))
 
     return render_template('index.html', messages=chat_messages)
 
@@ -55,7 +60,6 @@ def download(filetype):
         with open(file_path, 'w', encoding='utf-8') as f:
             for msg in chat_messages:
                 f.write(f"[{msg['timestamp']}] {msg['sender']}: {msg['text']}\n")
-
     elif filetype == 'csv':
         with open(file_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=["timestamp", "sender", "text"])
