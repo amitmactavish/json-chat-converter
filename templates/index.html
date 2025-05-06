@@ -1,78 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Skype Chat JSON Viewer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-        h1 {
-            color: #2c3e50;
-        }
-        form {
-            margin-bottom: 30px;
-        }
-        .chat-box {
-            padding: 10px;
-            border: 1px solid #ccc;
-            background-color: #fff;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .message {
-            margin-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 8px;
-        }
-        .timestamp {
-            font-size: 0.85em;
-            color: #888;
-        }
-        .sender {
-            font-weight: bold;
-        }
-        .download-links {
-            margin-top: 20px;
-        }
-        .download-links a {
-            margin-right: 15px;
-            text-decoration: none;
-            background-color: #2980b9;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 5px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>JSON Chat Converter</title>
+  <style>
+    body { font-family: Arial; padding: 2rem; background-color: #f9f9f9; }
+    h1 { color: #2c3e50; }
+    .loader {
+      display: none;
+      font-size: 1.2rem;
+      color: #e67e22;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+      border-collapse: collapse;
+      padding: 5px;
+    }
+    th { background-color: #eee; }
+  </style>
 </head>
 <body>
-    <h1>Skype Chat JSON Viewer</h1>
-    
-    <form method="POST" enctype="multipart/form-data">
-        <label>Select a .json file:</label>
-        <input type="file" name="json_file" accept=".json" required>
-        <button type="submit">Upload</button>
-    </form>
+  <h1>Upload Skype JSON Chat File</h1>
+  <form id="uploadForm" method="post" enctype="multipart/form-data">
+    <input type="file" name="json_file" accept=".json" required>
+    <button type="submit">Upload</button>
+  </form>
 
-    {% if messages %}
-        <div class="chat-box">
-            {% for msg in messages %}
-                <div class="message">
-                    <div class="timestamp">[{{ msg.timestamp }}]</div>
-                    <div class="sender">{{ msg.sender }}:</div>
-                    <div class="text">{{ msg.text }}</div>
-                </div>
-            {% endfor %}
-        </div>
+  <p class="loader" id="loadingMsg">⏳ Processing file... please wait...</p>
 
-        <div class="download-links">
-            <h3>Download as:</h3>
-            <a href="{{ url_for('download', filetype='txt') }}">TXT File</a>
-            <a href="{{ url_for('download', filetype='csv') }}">CSV File</a>
-        </div>
-    {% endif %}
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', function (e) {
+      const fileInput = document.querySelector('input[name="json_file"]');
+      const file = fileInput.files[0];
+      const maxSize = 200 * 1024 * 1024; // 200MB
+
+      if (file.size > maxSize) {
+        alert("❗ File is too large (max 200MB).");
+        e.preventDefault();
+        return;
+      }
+
+      document.getElementById('loadingMsg').style.display = 'block';
+    });
+  </script>
+
+  {% if messages %}
+    <h2>Parsed Messages</h2>
+    <p><a href="/download/txt">Download as TXT</a> | <a href="/download/csv">Download as CSV</a></p>
+    <table>
+      <tr>
+        <th>Timestamp</th>
+        <th>Sender</th>
+        <th>Message</th>
+      </tr>
+      {% for msg in messages %}
+      <tr>
+        <td>{{ msg.timestamp }}</td>
+        <td>{{ msg.sender }}</td>
+        <td>{{ msg.text }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
 </body>
 </html>
