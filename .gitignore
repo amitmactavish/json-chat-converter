@@ -1,3 +1,10 @@
+__pycache__/
+*.pyc
+instance/
+.env
+uploads/
+downloads/
+
 # Python
 *.pyc
 *.pyo
