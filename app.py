@@ -42,7 +42,7 @@ def download(filetype):
         with open(file_path, 'w', encoding='utf-8') as f:
             for msg in chat_messages:
                 f.write(f"[{msg['timestamp']}] {msg['sender']}: {msg['text']}\n")
-")
+                
     elif filetype == 'csv':
         with open(file_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=["timestamp", "sender", "text"])
