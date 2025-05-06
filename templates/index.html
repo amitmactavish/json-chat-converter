@@ -1,37 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>JSON Chat Viewer</title>
+    <meta charset="UTF-8">
+    <title>Skype Chat JSON Viewer</title>
     <style>
-        body { font-family: Arial; margin: 20px; }
-        .message { margin-bottom: 10px; }
-        .timestamp { color: gray; font-size: 0.9em; }
-        .sender { font-weight: bold; }
-        .download-links { margin-top: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        form {
+            margin-bottom: 30px;
+        }
+        .chat-box {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        .timestamp {
+            font-size: 0.85em;
+            color: #888;
+        }
+        .sender {
+            font-weight: bold;
+        }
+        .download-links {
+            margin-top: 20px;
+        }
+        .download-links a {
+            margin-right: 15px;
+            text-decoration: none;
+            background-color: #2980b9;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>Upload JSON Chat File</h1>
-    <form method="post" enctype="multipart/form-data">
+    <h1>Skype Chat JSON Viewer</h1>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <label>Select a .json file:</label>
         <input type="file" name="json_file" accept=".json" required>
-        <button type="submit">Upload & View</button>
+        <button type="submit">Upload</button>
     </form>
 
     {% if messages %}
-        <div class="download-links">
-            <h2>Download as:</h2>
-            <a href="{{ url_for('download', filetype='txt') }}">📄 Text File (.txt)</a> |
-            <a href="{{ url_for('download', filetype='csv') }}">📑 CSV File (.csv)</a>
+        <div class="chat-box">
+            {% for msg in messages %}
+                <div class="message">
+                    <div class="timestamp">[{{ msg.timestamp }}]</div>
+                    <div class="sender">{{ msg.sender }}:</div>
+                    <div class="text">{{ msg.text }}</div>
+                </div>
+            {% endfor %}
         </div>
 
-        <h2>Chat Messages</h2>
-        {% for msg in messages %}
-            <div class="message">
-                <div class="timestamp">[{{ msg.timestamp }}]</div>
-                <div class="sender">{{ msg.sender }}:</div>
-                <div class="text">{{ msg.text }}</div>
-            </div>
-        {% endfor %}
+        <div class="download-links">
+            <h3>Download as:</h3>
+            <a href="{{ url_for('download', filetype='txt') }}">TXT File</a>
+            <a href="{{ url_for('download', filetype='csv') }}">CSV File</a>
+        </div>
     {% endif %}
 </body>
 </html>
