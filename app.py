@@ -15,21 +15,27 @@ chat_messages = []
 def index():
     global chat_messages
     chat_messages = []
+
     if request.method == 'POST':
-        file = request.files['json_file']
-        if file and file.filename.endswith('.json'):
-            path = os.path.join(UPLOAD_FOLDER, file.filename)
-            file.save(path)
-            with open(path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                for conv in data.get("conversations", []):
-                    for msg in conv.get("messages", []):
-                        chat_messages.append({
-                            "timestamp": msg.get("timestamp", ""),
-                            "sender": msg.get("from", "Unknown"),
-                            "text": msg.get("text", "")
-                        })
+        try:
+            file = request.files['json_file']
+            if file and file.filename.endswith('.json'):
+                path = os.path.join(UPLOAD_FOLDER, file.filename)
+                file.save(path)
+                with open(path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    for conv in data.get("conversations", []):
+                        for msg in conv.get("messages", []):
+                            chat_messages.append({
+                                "timestamp": msg.get("timestamp", ""),
+                                "sender": msg.get("from", "Unknown"),
+                                "text": msg.get("text", "")
+                            })
+        except Exception as e:
+            return f"Error processing file: {e}", 500
+
     return render_template('index.html', messages=chat_messages)
+
 
 @app.route('/download/<filetype>')
 def download(filetype):
