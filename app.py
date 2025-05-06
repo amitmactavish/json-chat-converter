@@ -1,12 +1,16 @@
 from flask import Flask, request, render_template, send_file, redirect, url_for
-import traceback
-import json
 import os
 import csv
+import traceback
+import ijson  # streaming JSON parser
 
 app = Flask(__name__)
+
+# Configuration
 UPLOAD_FOLDER = 'uploads'
 DOWNLOAD_FOLDER = 'downloads'
+app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200 MB max upload
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
@@ -23,20 +27,22 @@ def index():
             if file and file.filename.endswith('.json'):
                 path = os.path.join(UPLOAD_FOLDER, file.filename)
                 file.save(path)
-                with open(path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    for conv in data.get("conversations", []):
+
+                with open(path, 'rb') as f:  # use binary mode for ijson
+                    for conv in ijson.items(f, 'conversations.item'):
                         for msg in conv.get("messages", []):
                             chat_messages.append({
                                 "timestamp": msg.get("timestamp", ""),
                                 "sender": msg.get("from", "Unknown"),
                                 "text": msg.get("text", "")
                             })
+
         except Exception as e:
-            return f"Error processing file: {e}", 500
+            print("❌ Error while processing the uploaded file:")
+            print(traceback.format_exc())
+            return f"<h2>Error processing file:</h2><pre>{e}</pre>", 500
 
     return render_template('index.html', messages=chat_messages)
-
 
 @app.route('/download/<filetype>')
 def download(filetype):
@@ -49,7 +55,7 @@ def download(filetype):
         with open(file_path, 'w', encoding='utf-8') as f:
             for msg in chat_messages:
                 f.write(f"[{msg['timestamp']}] {msg['sender']}: {msg['text']}\n")
-                
+
     elif filetype == 'csv':
         with open(file_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=["timestamp", "sender", "text"])
@@ -60,9 +66,5 @@ def download(filetype):
 
     return send_file(file_path, as_attachment=True)
 
-import os
-
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
-
+    app.run(debug=True)
